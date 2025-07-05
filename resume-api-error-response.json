@@ -1,0 +1,21 @@
+{
+  "success": false,
+  "error": {
+    "code": "PARSING_FAILED",
+    "message": "Unable to extract text from the provided resume file",
+    "details": "The PDF appears to be image-based without OCR-readable text",
+    "suggestions": [
+      "Ensure the file is text-based PDF or DOCX",
+      "Try converting image-based PDFs using OCR first"
+    ]
+  },
+  "metadata": {
+    "parsed_at": "2024-07-05T22:18:08Z",
+    "file_info": {
+      "original_filename": "resume.pdf",
+      "file_size_bytes": 1024000,
+      "file_type": "application/pdf"
+    },
+    "processing_time_ms": 850
+  }
+}

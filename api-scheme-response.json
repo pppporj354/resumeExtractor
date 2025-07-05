@@ -1,0 +1,198 @@
+{
+  "success": true,
+  "data": {
+    "personal_info": {
+      "full_name": "John Doe",
+      "email": "john.doe@email.com",
+      "phone": "+1-555-123-4567",
+      "location": {
+        "city": "San Francisco",
+        "state": "CA",
+        "country": "USA",
+        "postal_code": "94105"
+      },
+      "linkedin": "https://linkedin.com/in/johndoe",
+      "github": "https://github.com/johndoe",
+      "portfolio": "https://johndoe.dev",
+      "other_links": ["https://twitter.com/johndoe"]
+    },
+    "professional_summary": {
+      "title": "Senior Full Stack Developer",
+      "summary": "Experienced software engineer with 5+ years developing scalable web applications...",
+      "total_years_experience": 5.5,
+      "current_role": "Senior Software Engineer",
+      "current_company": "Tech Corp Inc."
+    },
+    "skills": {
+      "technical_skills": [
+        {
+          "category": "Programming Languages",
+          "skills": [
+            {
+              "name": "JavaScript",
+              "proficiency_level": "expert",
+              "years_experience": 5
+            },
+            {
+              "name": "TypeScript",
+              "proficiency_level": "advanced",
+              "years_experience": 3
+            },
+            {
+              "name": "Python",
+              "proficiency_level": "intermediate",
+              "years_experience": 2
+            }
+          ]
+        },
+        {
+          "category": "Frameworks & Libraries",
+          "skills": [
+            {
+              "name": "React",
+              "proficiency_level": "expert",
+              "years_experience": 4
+            },
+            {
+              "name": "Node.js",
+              "proficiency_level": "advanced",
+              "years_experience": 4
+            },
+            {
+              "name": "Express.js",
+              "proficiency_level": "advanced",
+              "years_experience": 3
+            }
+          ]
+        },
+        {
+          "category": "Databases",
+          "skills": [
+            {
+              "name": "PostgreSQL",
+              "proficiency_level": "advanced",
+              "years_experience": 3
+            },
+            {
+              "name": "MongoDB",
+              "proficiency_level": "intermediate",
+              "years_experience": 2
+            }
+          ]
+        },
+        {
+          "category": "Cloud & DevOps",
+          "skills": [
+            {
+              "name": "AWS",
+              "proficiency_level": "intermediate",
+              "years_experience": 2
+            },
+            {
+              "name": "Docker",
+              "proficiency_level": "intermediate",
+              "years_experience": 2
+            }
+          ]
+        }
+      ],
+      "soft_skills": [
+        "Team Leadership",
+        "Project Management",
+        "Communication",
+        "Problem Solving",
+        "Agile/Scrum"
+      ],
+      "certifications": [
+        {
+          "name": "AWS Solutions Architect Associate",
+          "issuer": "Amazon Web Services",
+          "date_obtained": "2023-06-15",
+          "expiry_date": "2026-06-15",
+          "credential_id": "AWS-SAA-123456"
+        }
+      ]
+    },
+    "work_experience": [
+      {
+        "company": "Tech Corp Inc.",
+        "position": "Senior Software Engineer",
+        "start_date": "2022-01-15",
+        "end_date": null,
+        "duration_years": 2.5,
+        "location": "San Francisco, CA",
+        "description": "Lead development of microservices architecture...",
+        "key_achievements": [
+          "Improved application performance by 40%",
+          "Led team of 5 developers"
+        ],
+        "technologies_used": ["React", "Node.js", "PostgreSQL", "AWS"]
+      },
+      {
+        "company": "StartupXYZ",
+        "position": "Full Stack Developer",
+        "start_date": "2020-03-01",
+        "end_date": "2021-12-31",
+        "duration_years": 1.8,
+        "location": "Remote",
+        "description": "Developed and maintained web applications...",
+        "key_achievements": [
+          "Built entire frontend from scratch",
+          "Reduced load times by 60%"
+        ],
+        "technologies_used": ["Vue.js", "Express.js", "MongoDB"]
+      }
+    ],
+    "education": [
+      {
+        "institution": "University of California, Berkeley",
+        "degree": "Bachelor of Science",
+        "field_of_study": "Computer Science",
+        "start_date": "2016-09-01",
+        "end_date": "2020-05-15",
+        "gpa": "3.8",
+        "honors": ["Magna Cum Laude", "Dean's List"]
+      }
+    ],
+    "projects": [
+      {
+        "name": "E-commerce Platform",
+        "description": "Built a full-stack e-commerce platform using React and Node.js",
+        "technologies": ["React", "Node.js", "PostgreSQL", "Stripe API"],
+        "url": "https://github.com/johndoe/ecommerce-platform",
+        "start_date": "2023-01-01",
+        "end_date": "2023-06-01"
+      }
+    ],
+    "languages": [
+      {
+        "language": "English",
+        "proficiency": "native"
+      },
+      {
+        "language": "Spanish",
+        "proficiency": "conversational"
+      }
+    ]
+  },
+  "metadata": {
+    "parsed_at": "2024-07-05T22:18:08Z",
+    "file_info": {
+      "original_filename": "john_doe_resume.pdf",
+      "file_size_bytes": 245760,
+      "file_type": "application/pdf",
+      "pages_count": 2
+    },
+    "confidence_scores": {
+      "personal_info": 0.95,
+      "skills_extraction": 0.88,
+      "experience_parsing": 0.92,
+      "overall": 0.91
+    },
+    "processing_time_ms": 2340,
+    "warnings": [
+      "Some dates were inferred from context",
+      "Proficiency levels estimated based on experience duration"
+    ]
+  }
+}
