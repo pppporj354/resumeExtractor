@@ -164,13 +164,28 @@ export class ResumeParserService {
       warnings: [],
     }
 
-    const successResponse: ResumeParseSuccessResponse = {
-      success: true,
-      data: structuredData,
-      metadata,
+    if (structuredData) {
+      const successResponse: ResumeParseSuccessResponse = {
+        success: true,
+        data: structuredData,
+        metadata,
+      }
+      return successResponse
     }
 
-    return successResponse
+    // Fallback error (should not be reached)
+    return {
+      success: false,
+      error: {
+        code: "PARSING_FAILED",
+        message: "Failed to extract text from the resume file.",
+        details: "Default implementation fallback.",
+        suggestions: [
+          "Ensure the file is a valid PDF or DOCX.",
+          "Try uploading a different file.",
+        ],
+      },
+    }
   }
 }
 

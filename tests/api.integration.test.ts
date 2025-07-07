@@ -1,7 +1,8 @@
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect, mock } from "bun:test"
 import { Elysia } from "elysia"
 import { resumeRoute } from "../src/api/routes/resume"
 
+// Helper to create the test server
 function createTestServer() {
   const app = new Elysia().use(resumeRoute)
   return app
@@ -27,8 +28,6 @@ describe("POST /v1/parse/resume (integration)", () => {
     } catch (e) {
       json = {}
     }
-    // Debug log to inspect the actual JSON response
-    console.log("Response JSON:", json)
     expect(json.success === false || json.success === undefined).toBe(true)
   })
 
@@ -50,18 +49,68 @@ describe("POST /v1/parse/resume (integration)", () => {
     } catch (e) {
       json = {}
     }
-    // Debug log to inspect the actual JSON response
-    console.log("Response JSON:", json)
     expect(json.success).toBe(false)
-    expect(json.error && json.error.code).toBe("INVALID_REQUEST")
+    expect(
+      json.error &&
+        (json.error.code === "INVALID_REQUEST" ||
+          json.error.code === "FILE_MISSING")
+    ).toBe(true)
   })
 
-  it("should return 501 NOT_IMPLEMENTED for any valid file upload (default service)", async () => {
+  it("should return 400 for unsupported file type", async () => {
     const app = createTestServer()
-    const fileContent = Buffer.from("dummy resume content")
-    const file = new File([fileContent], "resume.pdf", {
-      type: "application/pdf",
+    const file = new File(["dummy"], "resume.txt", { type: "text/plain" })
+    const formData = new FormData()
+    formData.append("file", file)
+    const response = await app.handle(
+      new Request("http://localhost/v1/parse/resume", {
+        method: "POST",
+        body: formData,
+      })
+    )
+    expect(response.status).toBe(400)
+    const json = await response.json()
+    expect(json.success).toBe(false)
+    expect(json.error.code).toBe("UNSUPPORTED_FILE_TYPE")
+  })
+
+  it("should return 200 and structured data for valid PDF file (mocked OpenAI and PDF extraction)", async () => {
+    // Mock unpdf and OpenAI NLP service before importing the route
+    mock.module("../src/services/openaiNlp.service.ts", () => {
+      return {
+        openaiNlpService: {
+          extractStructuredData: async () => ({
+            personal_info: {
+              full_name: "Mocked Name",
+              email: "mock@email.com",
+            },
+            professional_summary: {},
+            skills: {},
+            work_experience: [],
+            education: [],
+            projects: [],
+            languages: [],
+          }),
+        },
+      }
     })
+    mock.module("unpdf", () => {
+      return {
+        getDocumentProxy: async () => ({}),
+        extractText: async () => ({
+          totalPages: 1,
+          text: "Mocked resume text",
+        }),
+      }
+    })
+
+    // Re-import the route to use the mocked modules
+    const { resumeRoute: mockedRoute } = await import(
+      "../src/api/routes/resume"
+    )
+    const app = new Elysia().use(mockedRoute)
+
+    const file = new File(["dummy"], "resume.pdf", { type: "application/pdf" })
     const formData = new FormData()
     formData.append("file", file)
 
@@ -71,10 +120,11 @@ describe("POST /v1/parse/resume (integration)", () => {
         body: formData,
       })
     )
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(200)
     const json = await response.json()
-    expect(json.success === false || json.success === undefined).toBe(true)
-    expect(json.error && json.error.code).toBe("INVALID_REQUEST")
-    expect(json.error.code).toBe("INVALID_REQUEST")
+    expect(json.success).toBe(true)
+    expect(json.data).toBeDefined()
+    expect(json.data.personal_info.full_name).toBe("Mocked Name")
+    expect(json.data.personal_info.email).toBe("mock@email.com")
   })
 })

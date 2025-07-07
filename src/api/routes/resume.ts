@@ -1,5 +1,6 @@
 import { Elysia } from "elysia"
 import { resumeParserService } from "../../services/resumeParser.service"
+import { ResumeParseResponseSchema } from "../../openapi/schema"
 
 export const resumeRoute = new Elysia().post(
   "/v1/parse/resume",
@@ -38,9 +39,26 @@ export const resumeRoute = new Elysia().post(
       }
     }
 
+    const filename = file.name
+    const lowerFilename = filename.toLowerCase()
+    if (!(lowerFilename.endsWith(".pdf") || lowerFilename.endsWith(".docx"))) {
+      set.status = 400
+      return {
+        success: false,
+        error: {
+          code: "UNSUPPORTED_FILE_TYPE",
+          message: "Only PDF and DOCX files are supported.",
+          details: `Received file: ${filename}`,
+          suggestions: [
+            "Upload a resume in PDF or DOCX format.",
+            "Convert your file to a supported format.",
+          ],
+        },
+      }
+    }
+
     // Read the file buffer and filename
     const fileBuffer = Buffer.from(await file.arrayBuffer())
-    const filename = file.name
 
     // Call the resume parser service
     const result = await resumeParserService.parseResume(fileBuffer, filename)
@@ -48,11 +66,41 @@ export const resumeRoute = new Elysia().post(
     // Set status code based on result
     if (result.success) {
       set.status = 200
+      return result
     } else {
+      // Explicitly check for unsupported file type
+      if (result.error.code === "UNSUPPORTED_FILE_TYPE") {
+        set.status = 400
+        return result
+      }
       set.status = 501 // Not implemented or other error
+      return result
     }
-
-    // Return the result (success or error)
-    return result
+  },
+  {
+    detail: {
+      tags: ["Resume"],
+      summary: "Parse a resume file and extract structured candidate data",
+      description:
+        "Accepts a PDF resume file (multipart/form-data) and returns structured JSON with skills, contact info, and experience.",
+      responses: {
+        200: {
+          description: "Successful extraction",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ResumeParseResponse",
+              },
+            },
+          },
+        },
+        400: {
+          description: "Invalid request or unsupported file type",
+        },
+        500: {
+          description: "Internal server error",
+        },
+      },
+    },
   }
 )

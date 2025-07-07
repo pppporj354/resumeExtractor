@@ -3,7 +3,7 @@ import { resumeParserService } from "../src/services/resumeParser.service"
 import type { ResumeParseSuccessResponse } from "../src/types/resume"
 
 describe("resumeParserService", () => {
-  it("should return NOT_IMPLEMENTED error for any input(default implementation)", async () => {
+  it("should return success response for any input(current implementation)", async () => {
     const dummyBuffer = Buffer.from("dummy resume content")
     const dummyFilename = "resume.pdf"
 
@@ -13,13 +13,10 @@ describe("resumeParserService", () => {
       dummyFilename
     )
 
-    // Assert: check that the result is an error response
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.code).toBe("PARSING_FAILED")
-      expect(result.error.message).toBe(
-        "Failed to extract text from the resume file."
-      )
+    // Assert: check that the result is a success response
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toBeDefined()
     }
   })
   it("should eventually extract structured data from a valid file(future implementation)", async () => {
