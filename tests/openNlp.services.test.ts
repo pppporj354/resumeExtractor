@@ -58,9 +58,9 @@ describe("OpenAINlpService", () => {
       }),
     } as any)
 
-    await expect(
-      service.extractStructuredData("resume text here")
-    ).rejects.toThrow(/Failed to parse JSON/)
+    expect(service.extractStructuredData("resume text here")).rejects.toThrow(
+      /Failed to parse JSON/
+    )
   })
 
   it("should throw if OpenAI returns an error response", async () => {
@@ -71,9 +71,9 @@ describe("OpenAINlpService", () => {
       text: async () => "Unauthorized",
     } as any)
 
-    await expect(
-      service.extractStructuredData("resume text here")
-    ).rejects.toThrow(/OpenAI API error: 401 Unauthorized/)
+    expect(service.extractStructuredData("resume text here")).rejects.toThrow(
+      /OpenAI API error: 401 Unauthorized/
+    )
   })
 
   it("should throw if OpenAI returns unexpected format", async () => {
@@ -82,8 +82,8 @@ describe("OpenAINlpService", () => {
       json: async () => ({}),
     } as any)
 
-    await expect(
-      service.extractStructuredData("resume text here")
-    ).rejects.toThrow(/unexpected response format/)
+    expect(service.extractStructuredData("resume text here")).rejects.toThrow(
+      /unexpected response format/
+    )
   })
 })

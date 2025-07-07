@@ -18,7 +18,7 @@ describe("resumeParserService", () => {
     if (!result.success) {
       expect(result.error.code).toBe("PARSING_FAILED")
       expect(result.error.message).toBe(
-        "Resume parsing is not implemented yet."
+        "Failed to extract text from the resume file."
       )
     }
   })
