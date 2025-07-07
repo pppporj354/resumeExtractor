@@ -13,10 +13,10 @@ describe("resumeParserService", () => {
       dummyFilename
     )
 
-    // Assert: check that the result is an error response with NOT_IMPLEMENTED code
+    // Assert: check that the result is an error response
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.code).toBe("NOT_IMPLEMENTED")
+      expect(result.error.code).toBe("PARSING_FAILED")
       expect(result.error.message).toBe(
         "Resume parsing is not implemented yet."
       )
@@ -37,8 +37,7 @@ describe("resumeParserService", () => {
       expect(data).toHaveProperty("skills")
       expect(data).toHaveProperty("work_experience")
     } else {
-      // Current implementation: still not implemented
-      expect(result.error.code).toBe("NOT_IMPLEMENTED")
+      expect(result.error.code).toBe("PARSING_FAILED")
     }
   })
 })
