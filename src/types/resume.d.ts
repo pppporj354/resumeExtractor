@@ -160,6 +160,7 @@ export interface ResumeMetadata {
   }
   processing_time_ms?: number
   warnings?: string[]
+  api_version: string
 }
 
 /**

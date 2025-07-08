@@ -1,10 +1,17 @@
 import { describe, it, expect, mock } from "bun:test"
 import { Elysia } from "elysia"
 import { resumeRoute } from "../src/api/routes/resume"
+import { healthRoute } from "../src/api/routes/health"
 
 // Helper to create the test server
 function createTestServer() {
   const app = new Elysia().use(resumeRoute)
+  return app
+}
+
+// Helper to create a test server with only the health route
+function createHealthTestServer() {
+  const app = new Elysia().use(healthRoute)
   return app
 }
 
@@ -151,5 +158,23 @@ describe("POST /v1/parse/resume (integration)", () => {
     expect(json.error.message).toBe(
       "Request body must be multipart/form-data with a file field named 'file'."
     )
+  })
+})
+
+describe("GET /health (integration)", () => {
+  it("should return 200 and status ok with uptime and timestamp", async () => {
+    const app = createHealthTestServer()
+    const response = await app.handle(
+      new Request("http://localhost/health", {
+        method: "GET",
+      })
+    )
+    expect(response.status).toBe(200)
+    const json = await response.json()
+    expect(json).toHaveProperty("status", "ok")
+    expect(typeof json.uptime).toBe("number")
+    expect(typeof json.timestamp).toBe("string")
+    // Optionally, check that timestamp is a valid ISO string
+    expect(() => new Date(json.timestamp)).not.toThrow()
   })
 })

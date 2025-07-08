@@ -10,14 +10,36 @@ import { openaiNlpService } from "./openaiNlp.service"
 
 export class ResumeParserService {
   private static readonly MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+  private static readonly API_VERSION = "1.0.0"
 
   async parseResume(
     fileBuffer: Buffer,
     filename: string
   ): Promise<ResumeParseResponse> {
+    const startTime = Date.now()
+
+    // Helper to build metadata for all responses
+    const buildMetadata = (
+      extra: Partial<ResumeMetadata> = {}
+    ): ResumeMetadata => ({
+      parsed_at: new Date().toISOString(),
+      file_info: {
+        original_filename: filename,
+        file_size_bytes: fileBuffer?.length ?? 0,
+        file_type: filename?.toLowerCase().endsWith(".pdf")
+          ? "application/pdf"
+          : "unknown",
+        pages_count: extra.file_info?.pages_count ?? undefined,
+      },
+      processing_time_ms: Date.now() - startTime,
+      api_version: ResumeParserService.API_VERSION,
+      warnings: extra.warnings ?? [],
+      ...extra,
+    })
+
     // Validate input
     if (!fileBuffer || !filename) {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "INVALID_INPUT",
@@ -28,13 +50,13 @@ export class ResumeParserService {
             "Check the 'file' field in the form data.",
           ],
         },
+        metadata: buildMetadata(),
       }
-      return errorResponse
     }
 
     // File size validation
     if (fileBuffer.length > ResumeParserService.MAX_FILE_SIZE_BYTES) {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "FILE_TOO_LARGE",
@@ -45,8 +67,8 @@ export class ResumeParserService {
             "Reduce the file size before uploading.",
           ],
         },
+        metadata: buildMetadata(),
       }
-      return errorResponse
     }
 
     // Detect file type by extension
@@ -58,7 +80,7 @@ export class ResumeParserService {
 
     // Only support PDF for now
     if (fileType === "unsupported") {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "UNSUPPORTED_FILE_TYPE",
@@ -69,15 +91,14 @@ export class ResumeParserService {
             "Convert your file to a supported format.",
           ],
         },
+        metadata: buildMetadata(),
       }
-      return errorResponse
     }
 
     let extractedText = ""
     let pagesCount = 1
     try {
       if (fileType === "pdf") {
-        // Use unpdf to extract text from PDF
         const pdf = await getDocumentProxy(new Uint8Array(fileBuffer))
         const { totalPages, text } = await extractText(pdf, {
           mergePages: true,
@@ -86,7 +107,7 @@ export class ResumeParserService {
         pagesCount = totalPages
       }
     } catch (err) {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "PARSING_FAILED",
@@ -97,13 +118,20 @@ export class ResumeParserService {
             "Try converting the file to a different format.",
           ],
         },
+        metadata: buildMetadata({
+          file_info: {
+            pages_count: pagesCount,
+            original_filename: "",
+            file_size_bytes: 0,
+            file_type: "",
+          },
+          warnings: ["PDF parsing failed"],
+        }),
       }
-      return errorResponse
     }
 
-    // If no text extracted, treat as image-based or corrupted
     if (!extractedText || extractedText.trim().length === 0) {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "PARSING_FAILED",
@@ -114,12 +142,18 @@ export class ResumeParserService {
             "Try converting image-based PDFs using OCR first.",
           ],
         },
+        metadata: buildMetadata({
+          file_info: {
+            pages_count: pagesCount,
+            original_filename: "",
+            file_size_bytes: 0,
+            file_type: "",
+          },
+          warnings: ["No text extracted from PDF"],
+        }),
       }
-      return errorResponse
     }
 
-    // Use OpenAI NLP service to extract structured data from the text
-    // Catch any errors from OpenAI NLP service
     let structuredData: ResumeData | null = null
     let openaiError: string | null = null
     try {
@@ -131,7 +165,7 @@ export class ResumeParserService {
     }
 
     if (!structuredData) {
-      const errorResponse: ResumeParseErrorResponse = {
+      return {
         success: false,
         error: {
           code: "NLP_EXTRACTION_FAILED",
@@ -143,62 +177,33 @@ export class ResumeParserService {
             "Ensure the resume contains clear, readable text.",
           ],
         },
-        metadata: {
-          parsed_at: new Date().toISOString(),
+        metadata: buildMetadata({
           file_info: {
-            original_filename: filename,
-            file_size_bytes: fileBuffer.length,
-            file_type:
-              fileType === "pdf"
-                ? "application/pdf"
-                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             pages_count: pagesCount,
+            original_filename: "",
+            file_size_bytes: 0,
+            file_type: "",
           },
-          processing_time_ms: 0,
           warnings: ["OpenAI NLP extraction failed."],
-        },
+        }),
       }
-      return errorResponse
     }
 
-    // Build metadata
-    const now = new Date()
-    const metadata: ResumeMetadata = {
-      parsed_at: now.toISOString(),
+    // Build metadata for success
+    const metadata: ResumeMetadata = buildMetadata({
       file_info: {
-        original_filename: filename,
-        file_size_bytes: fileBuffer.length,
-        file_type:
-          fileType === "pdf"
-            ? "application/pdf"
-            : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         pages_count: pagesCount,
+        original_filename: "",
+        file_size_bytes: 0,
+        file_type: "",
       },
-      processing_time_ms: 0,
       warnings: [],
-    }
+    })
 
-    if (structuredData) {
-      const successResponse: ResumeParseSuccessResponse = {
-        success: true,
-        data: structuredData,
-        metadata,
-      }
-      return successResponse
-    }
-
-    // Fallback error (should not be reached)
     return {
-      success: false,
-      error: {
-        code: "PARSING_FAILED",
-        message: "Failed to extract text from the resume file.",
-        details: "Default implementation fallback.",
-        suggestions: [
-          "Ensure the file is a valid PDF or DOCX.",
-          "Try uploading a different file.",
-        ],
-      },
+      success: true,
+      data: structuredData,
+      metadata,
     }
   }
 }
