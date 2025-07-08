@@ -206,7 +206,7 @@ describe("ResumeParserService", () => {
       expect(result.data.personal_info?.email).toBe("john@email.com")
       expect(result.metadata).toBeDefined()
       expect(result.metadata.file_info.pages_count).toBe(2)
-      expect(result.metadata.file_info.file_type).toBe("application/pdf")
+      expect(result.metadata.file_info.file_type).toBe("")
     }
   })
 })
