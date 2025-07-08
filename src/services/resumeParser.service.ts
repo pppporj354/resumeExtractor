@@ -9,6 +9,8 @@ import { getDocumentProxy, extractText } from "unpdf"
 import { openaiNlpService } from "./openaiNlp.service"
 
 export class ResumeParserService {
+  private static readonly MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+
   async parseResume(
     fileBuffer: Buffer,
     filename: string
@@ -30,25 +32,40 @@ export class ResumeParserService {
       return errorResponse
     }
 
-    // Detect file type by extension
-    const lowerFilename = filename.toLowerCase()
-    let fileType: "pdf" | "docx" | "unsupported" = "unsupported"
-    if (lowerFilename.endsWith(".pdf")) {
-      fileType = "pdf"
-    } else if (lowerFilename.endsWith(".docx")) {
-      fileType = "docx"
+    // File size validation
+    if (fileBuffer.length > ResumeParserService.MAX_FILE_SIZE_BYTES) {
+      const errorResponse: ResumeParseErrorResponse = {
+        success: false,
+        error: {
+          code: "FILE_TOO_LARGE",
+          message: `The uploaded file exceeds the maximum allowed size of ${ResumeParserService.MAX_FILE_SIZE_BYTES} bytes (5MB).`,
+          details: `Uploaded file size: ${fileBuffer.length} bytes.`,
+          suggestions: [
+            "Upload a smaller PDF file (max 5MB).",
+            "Reduce the file size before uploading.",
+          ],
+        },
+      }
+      return errorResponse
     }
 
-    // Only support PDF and DOCX for now
+    // Detect file type by extension
+    const lowerFilename = filename.toLowerCase()
+    let fileType: "pdf" | "unsupported" = "unsupported"
+    if (lowerFilename.endsWith(".pdf")) {
+      fileType = "pdf"
+    }
+
+    // Only support PDF for now
     if (fileType === "unsupported") {
       const errorResponse: ResumeParseErrorResponse = {
         success: false,
         error: {
           code: "UNSUPPORTED_FILE_TYPE",
-          message: "Only PDF and DOCX files are supported.",
+          message: "Only PDF files are supported.",
           details: `Received file: ${filename}`,
           suggestions: [
-            "Upload a resume in PDF or DOCX format.",
+            "Upload a resume in PDF format.",
             "Convert your file to a supported format.",
           ],
         },
@@ -67,10 +84,6 @@ export class ResumeParserService {
         })
         extractedText = text
         pagesCount = totalPages
-      } else if (fileType === "docx") {
-        // TODO: Use a Bun-compatible DOCX parser or WASM library
-        extractedText =
-          "Jane Smith\nSoftware Engineer\njane.smith@email.com\nPython, Django, PostgreSQL"
       }
     } catch (err) {
       const errorResponse: ResumeParseErrorResponse = {
@@ -97,7 +110,7 @@ export class ResumeParserService {
           message: "Unable to extract text from the provided resume file",
           details: "The file appears to be empty or not readable as text.",
           suggestions: [
-            "Ensure the file is a text-based PDF or DOCX.",
+            "Ensure the file is a text-based PDF.",
             "Try converting image-based PDFs using OCR first.",
           ],
         },
@@ -105,7 +118,8 @@ export class ResumeParserService {
       return errorResponse
     }
 
-    // --- NEW: Use OpenAI NLP service to extract structured data ---
+    // Use OpenAI NLP service to extract structured data from the text
+    // Catch any errors from OpenAI NLP service
     let structuredData: ResumeData | null = null
     let openaiError: string | null = null
     try {

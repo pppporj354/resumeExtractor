@@ -1,6 +1,3 @@
-/**
- * OpenAPI schema for the /v1/parse/resume endpoint request and response.
- */
 export const ResumeParseResponseSchema = {
   type: "object",
   properties: {
@@ -152,4 +149,26 @@ export const ResumeParseResponseSchema = {
       type: "object",
     },
   },
+}
+
+export const ResumeParseErrorResponseSchema = {
+  type: "object",
+  properties: {
+    success: { type: "boolean", enum: [false] },
+    error: {
+      type: "object",
+      properties: {
+        code: { type: "string" },
+        message: { type: "string" },
+        details: { type: "string" },
+        suggestions: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: ["code", "message"],
+    },
+    metadata: { type: "object" },
+  },
+  required: ["success", "error"],
 }

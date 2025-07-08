@@ -41,16 +41,17 @@ export const resumeRoute = new Elysia().post(
 
     const filename = file.name
     const lowerFilename = filename.toLowerCase()
-    if (!(lowerFilename.endsWith(".pdf") || lowerFilename.endsWith(".docx"))) {
+    // Only support PDF for now
+    if (!lowerFilename.endsWith(".pdf")) {
       set.status = 400
       return {
         success: false,
         error: {
           code: "UNSUPPORTED_FILE_TYPE",
-          message: "Only PDF and DOCX files are supported.",
+          message: "Only PDF files are supported.",
           details: `Received file: ${filename}`,
           suggestions: [
-            "Upload a resume in PDF or DOCX format.",
+            "Upload a resume in PDF format.",
             "Convert your file to a supported format.",
           ],
         },
@@ -88,17 +89,25 @@ export const resumeRoute = new Elysia().post(
           description: "Successful extraction",
           content: {
             "application/json": {
-              schema: {
-                $ref: "#/components/schemas/ResumeParseResponse",
-              },
+              schema: { $ref: "#/components/schemas/ResumeParseResponse" },
             },
           },
         },
         400: {
           description: "Invalid request or unsupported file type",
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResumeParseErrorResponse" },
+            },
+          },
         },
         500: {
           description: "Internal server error",
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResumeParseErrorResponse" },
+            },
+          },
         },
       },
     },

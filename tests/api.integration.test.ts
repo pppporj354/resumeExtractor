@@ -127,4 +127,29 @@ describe("POST /v1/parse/resume (integration)", () => {
     expect(json.data.personal_info.full_name).toBe("Mocked Name")
     expect(json.data.personal_info.email).toBe("mock@email.com")
   })
+
+  it("should return 400 if file is larger than 5MB", async () => {
+    const app = createTestServer()
+    // Create a buffer larger than 5MB
+    const largeBuffer = new Uint8Array(5 * 1024 * 1024 + 1).fill(1)
+    const file = new File([largeBuffer], "large_resume.pdf", {
+      type: "application/pdf",
+    })
+    const formData = new FormData()
+    formData.append("file", file)
+
+    const response = await app.handle(
+      new Request("http://localhost/v1/parse/resume", {
+        method: "POST",
+        body: formData,
+      })
+    )
+    expect(response.status).toBe(400)
+    const json = await response.json()
+    expect(json.success).toBe(false)
+    expect(json.error.code).toBe("INVALID_REQUEST")
+    expect(json.error.message).toBe(
+      "Request body must be multipart/form-data with a file field named 'file'."
+    )
+  })
 })
