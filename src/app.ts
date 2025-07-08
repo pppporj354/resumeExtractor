@@ -6,6 +6,7 @@ import {
   ResumeParseErrorResponseSchema,
 } from "./openapi/schema"
 import type { OpenAPIV3 } from "openapi-types"
+import { Logger } from "./utils/logger"
 
 new Elysia()
   .use(
@@ -32,4 +33,4 @@ new Elysia()
   .use(api)
   .listen(3000)
 
-console.log("Resume Skill Extractor API running at http://localhost:3000")
+Logger.info("Resume Skill Extractor API running at http://localhost:3000")

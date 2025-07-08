@@ -7,6 +7,7 @@ import type {
 } from "../types/resume.d.ts"
 import { getDocumentProxy, extractText } from "unpdf"
 import { openaiNlpService } from "./openaiNlp.service"
+import { Logger } from "../utils/logger"
 
 export class ResumeParserService {
   private static readonly MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
@@ -17,6 +18,7 @@ export class ResumeParserService {
     filename: string
   ): Promise<ResumeParseResponse> {
     const startTime = Date.now()
+    Logger.info(`Received resume parse request for file: ${filename}`)
 
     // Helper to build metadata for all responses
     const buildMetadata = (
@@ -39,6 +41,7 @@ export class ResumeParserService {
 
     // Validate input
     if (!fileBuffer || !filename) {
+      Logger.warn("Invalid input: missing file buffer or filename")
       return {
         success: false,
         error: {
@@ -56,6 +59,7 @@ export class ResumeParserService {
 
     // File size validation
     if (fileBuffer.length > ResumeParserService.MAX_FILE_SIZE_BYTES) {
+      Logger.warn(`File too large: ${filename} (${fileBuffer.length} bytes)`)
       return {
         success: false,
         error: {
@@ -80,6 +84,7 @@ export class ResumeParserService {
 
     // Only support PDF for now
     if (fileType === "unsupported") {
+      Logger.warn(`Unsupported file type: ${filename}`)
       return {
         success: false,
         error: {
@@ -99,6 +104,7 @@ export class ResumeParserService {
     let pagesCount = 1
     try {
       if (fileType === "pdf") {
+        Logger.info(`Extracting text from PDF: ${filename}`)
         const pdf = await getDocumentProxy(new Uint8Array(fileBuffer))
         const { totalPages, text } = await extractText(pdf, {
           mergePages: true,
@@ -107,6 +113,10 @@ export class ResumeParserService {
         pagesCount = totalPages
       }
     } catch (err) {
+      Logger.error(
+        `PDF parsing failed for file: ${filename}`,
+        (err as Error).message
+      )
       return {
         success: false,
         error: {
@@ -131,6 +141,7 @@ export class ResumeParserService {
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
+      Logger.warn(`No text extracted from PDF: ${filename}`)
       return {
         success: false,
         error: {
@@ -157,11 +168,16 @@ export class ResumeParserService {
     let structuredData: ResumeData | null = null
     let openaiError: string | null = null
     try {
+      Logger.info(`Sending extracted text to OpenAI for NLP: ${filename}`)
       structuredData = await openaiNlpService.extractStructuredData(
         extractedText
       )
     } catch (err) {
       openaiError = (err as Error).message
+      Logger.error(
+        `OpenAI NLP extraction failed for file: ${filename}`,
+        openaiError
+      )
     }
 
     if (!structuredData) {
@@ -188,6 +204,12 @@ export class ResumeParserService {
         }),
       }
     }
+
+    Logger.info(
+      `Resume parsing successful for file: ${filename} in ${
+        Date.now() - startTime
+      }ms`
+    )
 
     // Build metadata for success
     const metadata: ResumeMetadata = buildMetadata({
